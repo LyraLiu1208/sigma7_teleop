@@ -22,6 +22,8 @@ export SIGMA7_SDK_ROOT=/path/to/force-dimension-sdk
 
 ## Linux 快速开始
 
+默认推荐 `CPU runtime` 环境。它适合你当前的 Linux 侧 `screening`、残差策略推理和 MuJoCo viewer，不依赖 CUDA 驱动匹配细节。
+
 ```bash
 git clone <your-remote-url>
 cd sigma7_teleop
@@ -30,20 +32,55 @@ source .venv/bin/activate
 python scripts/doctor_linux.py
 ```
 
-默认会安装官方 `torch==2.6.0` 的 `cu124` wheel：
+## Linux 环境分层
+
+这个仓库现在明确分成两套 Linux 环境：
+
+- `bash scripts/setup_linux_cpu.sh`
+  - 用途：`screening`、残差策略推理、MuJoCo viewer、日常部署
+  - Torch：官方 CPU wheel
+  - 特点：最稳定，不依赖 NVIDIA 驱动/CUDA 兼容性
+- `bash scripts/setup_linux_gpu.sh`
+  - 用途：训练，或者未来明确要做 GPU 推理时再用
+  - Torch：官方 `cu124` wheel
+  - 特点：要求本机驱动和 CUDA 兼容
+
+为了兼容旧文档，`bash scripts/setup_linux.sh` 现在等价于：
 
 ```bash
-TORCH_VERSION=2.6.0 \
-PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cu124 \
-bash scripts/setup_linux.sh
+bash scripts/setup_linux_cpu.sh
 ```
 
-如果你只想先用 CPU 跑通环境，可以改成：
+### CPU runtime
+
+```bash
+rm -rf .venv
+bash scripts/setup_linux_cpu.sh
+source .venv/bin/activate
+python scripts/doctor_linux.py
+```
+
+### GPU training
+
+```bash
+rm -rf .venv
+bash scripts/setup_linux_gpu.sh
+source .venv/bin/activate
+python scripts/doctor_linux.py
+```
+
+如果你需要覆盖默认版本，也可以显式指定：
 
 ```bash
 TORCH_VERSION=2.6.0 \
 PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cpu \
-bash scripts/setup_linux.sh
+bash scripts/setup_linux_cpu.sh
+```
+
+```bash
+TORCH_VERSION=2.6.0 \
+PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cu124 \
+bash scripts/setup_linux_gpu.sh
 ```
 
 如果 `bash scripts/setup_linux.sh` 在 `python3 -m venv` 或 `ensurepip` 处失败，先安装：
@@ -57,7 +94,7 @@ sudo apt install -y python3-venv
 
 ```bash
 rm -rf .venv
-bash scripts/setup_linux.sh
+bash scripts/setup_linux_cpu.sh
 source .venv/bin/activate
 python scripts/doctor_linux.py
 ```
@@ -84,7 +121,7 @@ git push -u origin main
 ```bash
 git clone <your-remote-url>
 cd sigma7_teleop
-bash scripts/setup_linux.sh
+bash scripts/setup_linux_cpu.sh
 source .venv/bin/activate
 python scripts/doctor_linux.py
 ```

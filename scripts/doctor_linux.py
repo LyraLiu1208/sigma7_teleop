@@ -79,6 +79,26 @@ def check_virtualenv() -> CheckResult:
     )
 
 
+def check_env_profile() -> CheckResult:
+    profile_path = ROOT / ".venv" / ".sigma7_env_profile"
+    if not profile_path.exists():
+        return CheckResult("env_profile", False, f"{profile_path} is missing", warning=True)
+    values: dict[str, str] = {}
+    for line in profile_path.read_text(encoding="utf-8").splitlines():
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip()
+    profile_name = values.get("ENV_PROFILE_NAME", "<unknown>")
+    torch_version = values.get("TORCH_VERSION", "<unknown>")
+    index_url = values.get("PYTORCH_INDEX_URL", "<unknown>")
+    return CheckResult(
+        "env_profile",
+        True,
+        f"profile={profile_name} torch={torch_version} index={index_url}",
+    )
+
+
 def check_sender_sdk() -> CheckResult:
     sdk_root = os.environ.get("SIGMA7_SDK_ROOT") or os.environ.get("FORCEDIM_SDK_ROOT")
     if not sdk_root:
@@ -101,10 +121,41 @@ def check_package_import() -> CheckResult:
         return CheckResult("import:stiffness_copilot_mujoco", False, str(exc))
 
 
+def check_torch_runtime() -> CheckResult:
+    cmd = [
+        sys.executable,
+        "-c",
+        (
+            "import torch; "
+            "print(f'version={torch.__version__} cuda_available={torch.cuda.is_available()}', flush=True)"
+        ),
+    ]
+    completed = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        check=False,
+        env=os.environ.copy(),
+    )
+    stdout = completed.stdout.strip()
+    stderr = completed.stderr.strip()
+    if completed.returncode == 0:
+        return CheckResult("torch_runtime", True, stdout or "ok")
+    if completed.returncode < 0:
+        signal_num = -completed.returncode
+        detail = f"terminated by signal {signal_num}"
+        if stderr:
+            detail = f"{detail}; stderr={stderr}"
+        return CheckResult("torch_runtime", False, detail)
+    detail = stderr or stdout or f"exit code {completed.returncode}"
+    return CheckResult("torch_runtime", False, detail)
+
+
 def main() -> int:
     results = [
         check_git(),
         check_virtualenv(),
+        check_env_profile(),
         check_path(ROOT / "src" / "stiffness_copilot_mujoco", label="src_package"),
         check_path(ROOT / "configs" / "track_a_controllers.yaml", label="controllers_yaml"),
         check_path(ROOT / "scripts" / "live_image_window.py", label="live_image_window"),
@@ -117,6 +168,7 @@ def main() -> int:
         check_import("yaml"),
         check_import("cv2"),
         check_import("torch"),
+        check_torch_runtime(),
         check_import("matplotlib"),
         check_sender_sdk(),
         check_sender_binary(),
