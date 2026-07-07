@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import importlib
 import os
 import subprocess
 import sys
@@ -27,11 +26,38 @@ def check_path(path: Path, *, label: str) -> CheckResult:
 
 
 def check_import(module_name: str) -> CheckResult:
+    cmd = [
+        sys.executable,
+        "-c",
+        (
+            "import importlib; "
+            f"importlib.import_module({module_name!r}); "
+            "print('ok', flush=True)"
+        ),
+    ]
     try:
-        importlib.import_module(module_name)
-        return CheckResult(f"import:{module_name}", True, "ok")
+        completed = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+            env=os.environ.copy(),
+        )
     except Exception as exc:
         return CheckResult(f"import:{module_name}", False, str(exc))
+
+    stdout = completed.stdout.strip()
+    stderr = completed.stderr.strip()
+    if completed.returncode == 0:
+        return CheckResult(f"import:{module_name}", True, stdout or "ok")
+    if completed.returncode < 0:
+        signal_num = -completed.returncode
+        detail = f"terminated by signal {signal_num}"
+        if stderr:
+            detail = f"{detail}; stderr={stderr}"
+        return CheckResult(f"import:{module_name}", False, detail)
+    detail = stderr or stdout or f"exit code {completed.returncode}"
+    return CheckResult(f"import:{module_name}", False, detail)
 
 
 def check_git() -> CheckResult:
