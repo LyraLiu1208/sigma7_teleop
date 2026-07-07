@@ -11,6 +11,7 @@ import torch
 
 from stiffness_copilot_mujoco.learning.residual_stiffness import BaseStiffnessSpec, PARAM_NAMES
 from stiffness_copilot_mujoco.learning.stiffness_labels import cholesky_params_to_matrix, spd_project
+from stiffness_copilot_mujoco.runtime_defaults import DEFAULT_DINOV3_CHECKPOINT, DEFAULT_DINOV3_REPO
 
 
 VISION_POLICY_SCHEMA_VERSION = "vision_residual_bc_policy_v2"
@@ -216,6 +217,15 @@ def load_image_only_residual_bc_policy(path: Path) -> "VisionResidualBCPolicy":
     if policy.encoder is None:
         raise ValueError("Image-only residual BC policy is missing its image encoder.")
     return policy
+
+
+def _resolve_bundled_dinov3_asset(configured: str, bundled: Path) -> Path:
+    configured_path = Path(str(configured)).expanduser()
+    if configured_path.exists():
+        return configured_path
+    if bundled.exists():
+        return bundled
+    return configured_path
 
 
 def _as_hidden_dims(
@@ -459,9 +469,17 @@ class VisionResidualBCPolicy:
                 preprocess_config = metadata.get("preprocessing_config") or {}
                 if not isinstance(preprocess_config, dict):
                     raise ValueError("DINOv3 policy metadata preprocessing_config must be a mapping.")
+                resolved_dinov3_repo = _resolve_bundled_dinov3_asset(
+                    str(metadata["dinov3_repo"]),
+                    DEFAULT_DINOV3_REPO,
+                )
+                resolved_dinov3_checkpoint = _resolve_bundled_dinov3_asset(
+                    str(metadata["dinov3_checkpoint"]),
+                    DEFAULT_DINOV3_CHECKPOINT,
+                )
                 load_config = FrozenBackboneLoadConfig(
-                    dinov3_repo=Path(str(metadata["dinov3_repo"])),
-                    dinov3_checkpoint=Path(str(metadata["dinov3_checkpoint"])),
+                    dinov3_repo=resolved_dinov3_repo,
+                    dinov3_checkpoint=resolved_dinov3_checkpoint,
                     dinov3_entrypoint=str(metadata["dinov3_entrypoint"]),
                     preprocess_config=FrozenBackbonePreprocessConfig(
                         resize_height=int(preprocess_config.get("resize_height", 224)),
@@ -476,6 +494,8 @@ class VisionResidualBCPolicy:
                 )
                 encoder, backbone_metadata = build_frozen_dinov3_backbone(load_config)
                 metadata = dict(metadata)
+                metadata["dinov3_repo"] = str(resolved_dinov3_repo)
+                metadata["dinov3_checkpoint"] = str(resolved_dinov3_checkpoint)
                 metadata.setdefault("backbone_metadata", backbone_metadata)
             elif "encoder_seed" in metadata:
                 encoder = VisionEncoderSpec.random(
