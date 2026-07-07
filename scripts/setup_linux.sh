@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+VENV_DIR="${VENV_DIR:-$ROOT/.venv}"
+
+echo "[setup] project root: $ROOT"
+echo "[setup] python: $PYTHON_BIN"
+echo "[setup] venv: $VENV_DIR"
+
+"$PYTHON_BIN" -m venv "$VENV_DIR"
+"$VENV_DIR/bin/python" -m pip install --upgrade pip setuptools wheel
+"$VENV_DIR/bin/pip" install -e "$ROOT"
+
+if [[ -n "${SIGMA7_SDK_ROOT:-}" ]]; then
+  echo "[setup] building sigma7_pose_udp_sender with SIGMA7_SDK_ROOT=$SIGMA7_SDK_ROOT"
+  cmake -S "$ROOT/tools/sigma7_pose_udp_sender" -B "$ROOT/tools/build"
+  cmake --build "$ROOT/tools/build" -j
+else
+  echo "[setup] SIGMA7_SDK_ROOT not set; skipping Sigma7 sender build"
+fi
+
+"$VENV_DIR/bin/python" "$ROOT/scripts/doctor_linux.py"

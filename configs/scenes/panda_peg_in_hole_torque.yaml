@@ -1,0 +1,45 @@
+scene:
+  name: panda_peg_in_hole_torque
+  robot: panda
+  actuator_mode: torque
+  initial_keyframe: home
+  output: models/scenes/panda_peg_in_hole_torque.xml
+
+visual:
+  statistic_center: [0.45, 0.0, 0.45]
+  statistic_extent: 1.1
+
+vision:
+  eye_in_hand_camera:
+    name: eye_in_hand_rgb
+    pos: [0.075, 0.09, 0.1]
+    forward: [0.40, 0.0, -0.916515138991168]
+    up: [0.916515138991168, 0.0, 0.4]
+    fovy: 55.0
+
+table:
+  pos: [0.52, 0.0, 0.18]
+  size: [0.38, 0.32, 0.03]
+
+peg:
+  attachment: hand
+  shape: star_prism
+  points: 5
+  pos: [0.36, -0.12, 0.31]
+  hand_local_pos: [0.0, 0.0, 0.128]
+  outer_radius: 0.026
+  inner_radius: 0.013
+  half_height: 0.070
+  mass: 0.08
+
+hole:
+  pos: [0.52, 0.0, 0.235]
+  shape: star
+  points: 5
+  rotation: -1.57079632679
+  segments: 10
+  outer_radius: 0.042
+  inner_radius: 0.025
+  wall_radial_half_thickness: 0.003
+  wall_half_height: 0.030
+  completion_lateral_tolerance: 0.002

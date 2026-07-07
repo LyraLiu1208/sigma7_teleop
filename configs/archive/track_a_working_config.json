@@ -1,0 +1,26 @@
+{
+  "name": "track_a_depth_semantics_working_v1",
+  "scene": "circle",
+  "setting": "circle_calibrated_v1",
+  "profile_name": "circle_calibrated_v1_global_hole_fixed_contact",
+  "collection_controller_profile": "track_a_collection_c400",
+  "baseline_controller_profile": "track_a_baseline_b325",
+  "contact_condition_name": "light_clearance_m0p0003",
+  "controlled_contact_profile": {
+    "hole_xy_radius": 0.02,
+    "teleop_noise_xy_amplitude": 0.001,
+    "teleop_noise_cycles": 1.0,
+    "teleop_noise_phase_x": 0.0,
+    "teleop_noise_phase_y": 1.5707963267948966,
+    "clearance_delta": -0.0003,
+    "friction_scale": 1.15,
+    "peg_tilt_x": 0.0087,
+    "peg_tilt_y": -0.0087,
+    "hole_yaw_offset": 0.0
+  },
+  "notes": [
+    "Collection uses C400 and the light_clearance_m0p0003 contact condition.",
+    "Baseline uses B325 for later paired residual evaluation.",
+    "Old mid_high_* profile names remain available for compatibility."
+  ]
+}

@@ -1,0 +1,186 @@
+registry_version: track_a_controller_registry_v1
+
+controllers:
+  - controller_id: track_a_baseline_b325
+    aliases:
+      - mid_high_baseline
+      - mid_high_base
+      - mid_high
+    position_stiffness_matrix:
+      - [325.0, 0.0, 0.0]
+      - [0.0, 325.0, 0.0]
+      - [0.0, 0.0, 240.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A conservative baseline controller used for lower-force paired screening.
+    intended_role: reference_baseline
+
+  - controller_id: track_a_c400
+    position_stiffness_matrix:
+      - [400.0, 0.0, 0.0]
+      - [0.0, 400.0, 0.0]
+      - [0.0, 0.0, 300.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 400 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c450
+    position_stiffness_matrix:
+      - [450.0, 0.0, 0.0]
+      - [0.0, 450.0, 0.0]
+      - [0.0, 0.0, 330.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 450 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c500
+    position_stiffness_matrix:
+      - [500.0, 0.0, 0.0]
+      - [0.0, 500.0, 0.0]
+      - [0.0, 0.0, 360.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 500 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c550
+    position_stiffness_matrix:
+      - [550.0, 0.0, 0.0]
+      - [0.0, 550.0, 0.0]
+      - [0.0, 0.0, 400.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 550 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c600
+    position_stiffness_matrix:
+      - [600.0, 0.0, 0.0]
+      - [0.0, 600.0, 0.0]
+      - [0.0, 0.0, 450.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 600 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c650
+    position_stiffness_matrix:
+      - [650.0, 0.0, 0.0]
+      - [0.0, 650.0, 0.0]
+      - [0.0, 0.0, 480.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 650 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c700
+    position_stiffness_matrix:
+      - [700.0, 0.0, 0.0]
+      - [0.0, 700.0, 0.0]
+      - [0.0, 0.0, 520.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 700 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c800
+    position_stiffness_matrix:
+      - [800.0, 0.0, 0.0]
+      - [0.0, 800.0, 0.0]
+      - [0.0, 0.0, 600.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 800 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c900
+    position_stiffness_matrix:
+      - [900.0, 0.0, 0.0]
+      - [0.0, 900.0, 0.0]
+      - [0.0, 0.0, 675.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 900 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c1000
+    position_stiffness_matrix:
+      - [1000.0, 0.0, 0.0]
+      - [0.0, 1000.0, 0.0]
+      - [0.0, 0.0, 750.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 1000 N/m lateral stiffness.
+    intended_role: sweep_candidate
+
+  - controller_id: track_a_c1200
+    position_stiffness_matrix:
+      - [1200.0, 0.0, 0.0]
+      - [0.0, 1200.0, 0.0]
+      - [0.0, 0.0, 900.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+    description: Track A fixed controller candidate at 1200 N/m lateral stiffness.
+    intended_role: sweep_candidate

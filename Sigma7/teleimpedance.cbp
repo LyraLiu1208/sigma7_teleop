@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="teleimpedance" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/teleimpedance" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add directory="../../sdk-3.7.3/include/" />
+					<Add directory="../../sdk-3.7.3/external/Eigen/Eigen/" />
+					<Add directory="../../sdk-3.7.3/external/Eigen/lapack/" />
+					<Add directory="../../sdk-3.7.3/external/Eigen/blas/" />
+					<Add directory="../../sdk-3.7.3/build/" />
+				</Compiler>
+				<Linker>
+					<Add option="-framework CoreFoundation" />
+					<Add option="-framework IOKit" />
+					<Add library="../../sdk-3.7.3/lib/libdhd.a" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/teleimpedance" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

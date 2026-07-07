@@ -1,0 +1,57 @@
+registry_version: track_a_scenario_registry_v1
+
+scenarios:
+  circle:
+    status: completed
+    main_controller_id: track_a_c600
+    best_observed_controller_id: track_a_c600
+    high_success_requirement_met: true
+    teleop_mode: position_only
+    scene: circle
+    setting: circle_calibrated_v1
+    profile_name: circle_calibrated_v1_global_hole_fixed_contact
+    contact_profile: circle_calibrated_v1_global_hole_fixed_contact
+    contact_condition_name: light_clearance_m0p0003
+    notes:
+      - Current Track A vision main result.
+      - Controller-consistent pipeline completed on track_a_c600.
+
+  polygon_circle_logic_v1:
+    status: calibration_pending
+    main_controller_id: track_a_c600
+    best_observed_controller_id: track_a_c600
+    candidate_controller_id: null
+    high_success_requirement_met: false
+    confirmation_pending: true
+    observation_controller_id: track_a_c600
+    teleop_mode: position_only
+    residual_dim: 2
+    residual_parameterization: constrained_independent_lateral_scalars
+    scene: polygon_circle_logic_v1
+    setting: polygon_circle_logic_v1
+    profile_name: circle_calibrated_v1_global_hole_fixed_contact
+    contact_profile: circle_calibrated_v1_global_hole_fixed_contact
+    contact_condition_name: light_clearance_m0p0003
+    notes:
+      - Geometry-swap calibration scene that reuses the circle collection logic.
+      - Only peg / hole geometry and residual contract differ from circle.
+
+  star_circle_logic_v1:
+    status: calibration_pending
+    main_controller_id: track_a_c600
+    best_observed_controller_id: track_a_c600
+    candidate_controller_id: null
+    high_success_requirement_met: false
+    confirmation_pending: true
+    observation_controller_id: track_a_c600
+    teleop_mode: position_only
+    residual_dim: 3
+    residual_parameterization: independent_lateral_with_xy_coupling_3d
+    scene: star_circle_logic_v1
+    setting: star_circle_logic_v1
+    profile_name: circle_calibrated_v1_global_hole_fixed_contact
+    contact_profile: circle_calibrated_v1_global_hole_fixed_contact
+    contact_condition_name: light_clearance_m0p0003
+    notes:
+      - Geometry-swap calibration scene that reuses the circle collection logic.
+      - Only peg / hole geometry and residual contract differ from circle.

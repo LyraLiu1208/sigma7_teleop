@@ -1,0 +1,63 @@
+<mujoco model="panda_peg_in_hole_torque">
+  <include file="../generated/panda_with_peg_panda_peg_in_hole_torque_torque.xml"/>
+
+  <statistic center="0.45 0 0.45" extent="1.1"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.35 0.35 0.35" specular="0.1 0.1 0.1"/>
+    <rgba haze="0.15 0.18 0.22 1"/>
+    <global azimuth="135" elevation="-25"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.30 0.42 0.55" rgb2="0.03 0.04 0.05" width="512" height="3072"/>
+    <texture type="2d" name="table_grid" builtin="checker" mark="edge" rgb1="0.28 0.30 0.31" rgb2="0.20 0.22 0.23"
+      markrgb="0.72 0.72 0.72" width="300" height="300"/>
+    <material name="table_mat" texture="table_grid" texuniform="true" texrepeat="4 4" reflectance="0.12"/>
+    <material name="peg_mat" rgba="0.92 0.42 0.24 1"/>
+    <material name="hole_mat" rgba="0.24 0.28 0.32 1"/>
+    <mesh name="peg_mesh" vertex="0 0 -0.07 1.59204e-18 0.026 -0.07 -0.00764121 0.0105172 -0.07 -0.0247275 0.00803444 -0.07 -0.0123637 -0.00401722 -0.07 -0.0152824 -0.0210344 -0.07 -2.38806e-18 -0.013 -0.07 0.0152824 -0.0210344 -0.07 0.0123637 -0.00401722 -0.07 0.0247275 0.00803444 -0.07 0.00764121 0.0105172 -0.07 0 0 0.07 1.59204e-18 0.026 0.07 -0.00764121 0.0105172 0.07 -0.0247275 0.00803444 0.07 -0.0123637 -0.00401722 0.07 -0.0152824 -0.0210344 0.07 -2.38806e-18 -0.013 0.07 0.0152824 -0.0210344 0.07 0.0123637 -0.00401722 0.07 0.0247275 0.00803444 0.07 0.00764121 0.0105172 0.07" face="0 2 1 0 3 2 0 4 3 0 5 4 0 6 5 0 7 6 0 8 7 0 9 8 0 10 9 0 1 10 11 12 13 11 13 14 11 14 15 11 15 16 11 16 17 11 17 18 11 18 19 11 19 20 11 20 21 11 21 12 1 2 13 1 13 12 2 3 14 2 14 13 3 4 15 3 15 14 4 5 16 4 16 15 5 6 17 5 17 16 6 7 18 6 18 17 7 8 19 7 19 18 8 9 20 8 20 19 9 10 21 9 21 20 10 1 12 10 12 21"/>
+    <mesh name="peg_collision_00" vertex="0 0 -0.07 1.59204e-18 0.026 -0.07 -0.00764121 0.0105172 -0.07 0 0 0.07 1.59204e-18 0.026 0.07 -0.00764121 0.0105172 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+    <mesh name="peg_collision_01" vertex="0 0 -0.07 -0.00764121 0.0105172 -0.07 -0.0247275 0.00803444 -0.07 0 0 0.07 -0.00764121 0.0105172 0.07 -0.0247275 0.00803444 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+    <mesh name="peg_collision_02" vertex="0 0 -0.07 -0.0247275 0.00803444 -0.07 -0.0123637 -0.00401722 -0.07 0 0 0.07 -0.0247275 0.00803444 0.07 -0.0123637 -0.00401722 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+    <mesh name="peg_collision_03" vertex="0 0 -0.07 -0.0123637 -0.00401722 -0.07 -0.0152824 -0.0210344 -0.07 0 0 0.07 -0.0123637 -0.00401722 0.07 -0.0152824 -0.0210344 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+    <mesh name="peg_collision_04" vertex="0 0 -0.07 -0.0152824 -0.0210344 -0.07 -2.38806e-18 -0.013 -0.07 0 0 0.07 -0.0152824 -0.0210344 0.07 -2.38806e-18 -0.013 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+    <mesh name="peg_collision_05" vertex="0 0 -0.07 -2.38806e-18 -0.013 -0.07 0.0152824 -0.0210344 -0.07 0 0 0.07 -2.38806e-18 -0.013 0.07 0.0152824 -0.0210344 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+    <mesh name="peg_collision_06" vertex="0 0 -0.07 0.0152824 -0.0210344 -0.07 0.0123637 -0.00401722 -0.07 0 0 0.07 0.0152824 -0.0210344 0.07 0.0123637 -0.00401722 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+    <mesh name="peg_collision_07" vertex="0 0 -0.07 0.0123637 -0.00401722 -0.07 0.0247275 0.00803444 -0.07 0 0 0.07 0.0123637 -0.00401722 0.07 0.0247275 0.00803444 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+    <mesh name="peg_collision_08" vertex="0 0 -0.07 0.0247275 0.00803444 -0.07 0.00764121 0.0105172 -0.07 0 0 0.07 0.0247275 0.00803444 0.07 0.00764121 0.0105172 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+    <mesh name="peg_collision_09" vertex="0 0 -0.07 0.00764121 0.0105172 -0.07 1.59204e-18 0.026 -0.07 0 0 0.07 0.00764121 0.0105172 0.07 1.59204e-18 0.026 0.07" face="0 2 1 3 4 5 0 1 4 0 4 3 1 2 5 1 5 4 2 0 3 2 3 5"/>
+  </asset>
+
+  <default>
+    <default class="task_collision">
+      <geom condim="4" friction="0.9 0.02 0.002" solref="0.004 1" solimp="0.95 0.99 0.001"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <light name="task_key" pos="0.2 -0.7 1.8" dir="0.2 0.4 -1" directional="true"/>
+    <geom name="floor" type="plane" size="1.5 1.5 0.05" material="table_mat"/>
+
+    <body name="table" pos="0.52 0 0.18">
+      <geom name="table_top" type="box" size="0.38 0.32 0.03" material="table_mat" class="task_collision"/>
+    </body>
+
+    <body name="hole_fixture" pos="0.52 0 0.235">
+      <site name="hole_center" pos="0 0 0.03" size="0.008" rgba="0.18 0.62 0.72 1"/>
+      <geom name="hole_wall_00" type="box" pos="0.03111 0.00735 0.01500" quat="0.292485 0 0 0.956270" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+      <geom name="hole_wall_01" type="box" pos="0.01660 0.02732 0.01500" quat="0.601721 0 0 0.798707" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+      <geom name="hole_wall_02" type="box" pos="0.00263 0.03186 0.01500" quat="0.325456 0 0 -0.945557" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+      <geom name="hole_wall_03" type="box" pos="-0.02085 0.02423 0.01500" quat="0.017334 0 0 0.999850" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+      <geom name="hole_wall_04" type="box" pos="-0.02949 0.01234 0.01500" quat="0.819084 0 0 -0.573673" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+      <geom name="hole_wall_05" type="box" pos="-0.02949 -0.01234 0.01500" quat="0.573673 0 0 -0.819084" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+      <geom name="hole_wall_06" type="box" pos="-0.02085 -0.02423 0.01500" quat="0.999850 0 0 0.017334" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+      <geom name="hole_wall_07" type="box" pos="0.00263 -0.03186 0.01500" quat="0.945557 0 0 -0.325456" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+      <geom name="hole_wall_08" type="box" pos="0.01660 -0.02732 0.01500" quat="0.798707 0 0 0.601721" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+      <geom name="hole_wall_09" type="box" pos="0.03111 -0.00735 0.01500" quat="0.956270 0 0 0.292485" size="0.0131345 0.003 0.03" material="hole_mat" class="task_collision"/>
+    </body>
+
+
+  </worldbody>
+
+</mujoco>

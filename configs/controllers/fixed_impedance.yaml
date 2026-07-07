@@ -1,0 +1,178 @@
+default_profile: track_a_c600
+
+profiles:
+  soft:
+    description: Lower fixed gains for compliant contact validation.
+    position_stiffness: [150.0, 150.0, 150.0]
+    orientation_stiffness: [75.0, 75.0, 75.0]
+    nullspace_stiffness: [40.0, 40.0, 30.0, 30.0, 25.0, 15.0, 15.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  nominal:
+    description: Baseline fixed gains used for Phase 4 validation.
+    position_stiffness: [100.0, 100.0, 100.0]
+    orientation_stiffness: [50.0, 50.0, 50.0]
+    nullspace_stiffness: [75.0, 75.0, 50.0, 50.0, 40.0, 25.0, 25.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  mid_high_baseline:
+    description: Track A baseline controller for residual BC deployment; intentionally mid-high translational stiffness.
+    position_stiffness: [300.0, 300.0, 220.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_baseline_b325:
+    description: Track A working baseline controller for the depth-semantics pipeline; mid-high stiffness with B325 gains.
+    position_stiffness: [325.0, 325.0, 240.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c400:
+    description: Track A controller registry candidate C400.
+    position_stiffness: [400.0, 400.0, 300.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c450:
+    description: Track A controller registry candidate C450.
+    position_stiffness: [450.0, 450.0, 330.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c500:
+    description: Track A controller registry candidate C500.
+    position_stiffness: [500.0, 500.0, 360.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c550:
+    description: Track A controller registry candidate C550.
+    position_stiffness: [550.0, 550.0, 400.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c600:
+    description: Track A controller registry candidate C600.
+    position_stiffness: [600.0, 600.0, 450.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c650:
+    description: Track A controller registry candidate C650.
+    position_stiffness: [650.0, 650.0, 480.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c700:
+    description: Track A controller registry candidate C700.
+    position_stiffness: [700.0, 700.0, 520.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c800:
+    description: Track A controller registry candidate C800.
+    position_stiffness: [800.0, 800.0, 600.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c900:
+    description: Track A controller registry candidate C900.
+    position_stiffness: [900.0, 900.0, 675.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c1000:
+    description: Track A controller registry candidate C1000.
+    position_stiffness: [1000.0, 1000.0, 750.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  track_a_c1200:
+    description: Track A controller registry candidate C1200.
+    position_stiffness: [1200.0, 1200.0, 900.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [90.0, 90.0, 65.0, 65.0, 55.0, 35.0, 35.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
+
+  stiff:
+    description: Higher fixed gains for sensitivity validation.
+    position_stiffness: [200.0, 200.0, 200.0]
+    orientation_stiffness: [100.0, 100.0, 100.0]
+    nullspace_stiffness: [100.0, 100.0, 75.0, 75.0, 60.0, 40.0, 40.0]
+    damping_ratio: 1.0
+    position_twist_gain: 0.95
+    orientation_twist_gain: 0.95
+    integration_dt: 1.0
+    task_inertia_pinv_rcond: 0.01
