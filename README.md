@@ -30,6 +30,22 @@ source .venv/bin/activate
 python scripts/doctor_linux.py
 ```
 
+如果 `bash scripts/setup_linux.sh` 在 `python3 -m venv` 或 `ensurepip` 处失败，先安装：
+
+```bash
+sudo apt update
+sudo apt install -y python3-venv
+```
+
+然后重跑：
+
+```bash
+rm -rf .venv
+bash scripts/setup_linux.sh
+source .venv/bin/activate
+python scripts/doctor_linux.py
+```
+
 ## 推荐部署方式：Mac 连 Sigma7，Linux 跑仿真和 viewer
 
 这是你当前最省时间、也最符合现有代码结构的部署方式：

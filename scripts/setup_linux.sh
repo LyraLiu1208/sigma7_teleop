@@ -9,7 +9,25 @@ echo "[setup] project root: $ROOT"
 echo "[setup] python: $PYTHON_BIN"
 echo "[setup] venv: $VENV_DIR"
 
-"$PYTHON_BIN" -m venv "$VENV_DIR"
+if ! "$PYTHON_BIN" -m venv "$VENV_DIR"; then
+  cat <<EOF
+[setup] failed to create virtual environment with: $PYTHON_BIN -m venv $VENV_DIR
+[setup] This usually means your Linux system is missing the stdlib venv/ensurepip package.
+[setup] On Debian/Ubuntu, run:
+  sudo apt update
+  sudo apt install -y python3-venv
+[setup] Then rerun:
+  bash scripts/setup_linux.sh
+EOF
+  exit 1
+fi
+
+if [[ ! -x "$VENV_DIR/bin/python" ]]; then
+  echo "[setup] virtual environment was created incompletely: $VENV_DIR/bin/python is missing" >&2
+  echo "[setup] Remove $VENV_DIR and rerun after installing python3-venv." >&2
+  exit 1
+fi
+
 "$VENV_DIR/bin/python" -m pip install --upgrade pip setuptools wheel
 "$VENV_DIR/bin/pip" install -e "$ROOT"
 

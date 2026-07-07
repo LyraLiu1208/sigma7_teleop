@@ -39,6 +39,20 @@ def check_git() -> CheckResult:
     return CheckResult("git", git_dir.exists(), str(git_dir))
 
 
+def check_virtualenv() -> CheckResult:
+    venv_dir = ROOT / ".venv"
+    in_venv = sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+    expected_python = venv_dir / "bin" / "python"
+    using_expected_python = Path(sys.executable).resolve() == expected_python.resolve() if expected_python.exists() else False
+    detail = f"sys.executable={sys.executable}"
+    return CheckResult(
+        "python_virtualenv",
+        in_venv and using_expected_python,
+        detail,
+        warning=True,
+    )
+
+
 def check_sender_sdk() -> CheckResult:
     sdk_root = os.environ.get("SIGMA7_SDK_ROOT") or os.environ.get("FORCEDIM_SDK_ROOT")
     if not sdk_root:
@@ -64,6 +78,7 @@ def check_package_import() -> CheckResult:
 def main() -> int:
     results = [
         check_git(),
+        check_virtualenv(),
         check_path(ROOT / "src" / "stiffness_copilot_mujoco", label="src_package"),
         check_path(ROOT / "configs" / "track_a_controllers.yaml", label="controllers_yaml"),
         check_path(ROOT / "scripts" / "live_image_window.py", label="live_image_window"),
