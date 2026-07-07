@@ -30,6 +30,80 @@ source .venv/bin/activate
 python scripts/doctor_linux.py
 ```
 
+## 推荐部署方式：Mac 连 Sigma7，Linux 跑仿真和 viewer
+
+这是你当前最省时间、也最符合现有代码结构的部署方式：
+
+- `Mac` 保留现成的 Sigma7 SDK 和硬件连接，只负责发送 UDP 位姿
+- `Linux` 负责运行 `run_sigma7_screening_episode.py`、残差策略推理、MuJoCo 仿真和本地 viewer
+- `Linux` 不需要安装 Sigma7 SDK，除非你还想把 sender 也迁过去
+
+### 1. 先把当前仓库推到远端
+
+如果当前仓库还没有远端：
+
+```bash
+git remote add origin <your-remote-url>
+git push -u origin main
+```
+
+### 2. Linux 机器拉代码并准备环境
+
+```bash
+git clone <your-remote-url>
+cd sigma7_teleop
+bash scripts/setup_linux.sh
+source .venv/bin/activate
+python scripts/doctor_linux.py
+```
+
+### 3. 把 policy 文件也放到 Linux
+
+例如你可以把它放到仓库内的 `artifacts/models/vision_residual_bc/`：
+
+```bash
+mkdir -p artifacts/models/vision_residual_bc
+cp /path/to/circle_calibrated_v1_track_a_c600_53ep_frozen_train_val_split_dinov3_residual_bc_policy_6d.npz artifacts/models/vision_residual_bc/
+```
+
+### 4. Linux 上启动 screening episode
+
+把 `192.168.1.50` 替换成 Linux 自己的局域网 IP。viewer 会直接开在 Linux 本机屏幕上。
+
+```bash
+cd /path/to/sigma7_teleop
+source .venv/bin/activate
+
+python scripts/run_sigma7_screening_episode.py \
+  --participant p01 \
+  --scene circle \
+  --controller residual \
+  --episode-id 0 \
+  --policy /path/to/sigma7_teleop/artifacts/models/vision_residual_bc/circle_calibrated_v1_track_a_c600_53ep_frozen_train_val_split_dinov3_residual_bc_policy_6d.npz \
+  --packet-host 0.0.0.0 \
+  --packet-port 5005
+```
+
+### 5. Mac 上只启动 Sigma7 UDP sender
+
+把 `192.168.1.50` 替换成 Linux 的局域网 IP：
+
+```bash
+cd /Users/lyra/Desktop/MasterThesis/sigma7_teleop
+
+python scripts/run_sigma7_pose_udp_sender.py \
+  --host 192.168.1.50 \
+  --port 5005
+```
+
+### 6. 网络检查
+
+- Mac 和 Linux 需要在同一个局域网里
+- 优先用有线网络
+- Linux 防火墙需要允许 UDP `5005`
+- Linux 必须有图形桌面环境，因为 MuJoCo viewer 是本地打开的
+- 如果你只做这种“Mac 控硬件、Linux 跑 viewer”的分机方案，Linux 不需要 `SIGMA7_SDK_ROOT`
+
 如果你要构建 Sigma7 UDP sender：
 
 ```bash
