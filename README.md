@@ -30,6 +30,22 @@ source .venv/bin/activate
 python scripts/doctor_linux.py
 ```
 
+默认会安装官方 `torch==2.6.0` 的 `cu124` wheel：
+
+```bash
+TORCH_VERSION=2.6.0 \
+PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cu124 \
+bash scripts/setup_linux.sh
+```
+
+如果你只想先用 CPU 跑通环境，可以改成：
+
+```bash
+TORCH_VERSION=2.6.0 \
+PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cpu \
+bash scripts/setup_linux.sh
+```
+
 如果 `bash scripts/setup_linux.sh` 在 `python3 -m venv` 或 `ensurepip` 处失败，先安装：
 
 ```bash
