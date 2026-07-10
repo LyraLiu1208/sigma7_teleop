@@ -11,9 +11,13 @@ import numpy as np
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
-MUJOCO_ROOT = ROOT.parent / "stiffness_copilot_mujoco"
-if str(MUJOCO_ROOT / "src") not in sys.path:
-    sys.path.insert(0, str(MUJOCO_ROOT / "src"))
+LOCAL_SRC_ROOT = ROOT / "src"
+LEGACY_MUJOCO_ROOT = ROOT.parent / "stiffness_copilot_mujoco"
+LEGACY_SRC_ROOT = LEGACY_MUJOCO_ROOT / "src"
+
+for candidate in (LOCAL_SRC_ROOT, LEGACY_SRC_ROOT):
+    if candidate.exists() and str(candidate) not in sys.path:
+        sys.path.insert(0, str(candidate))
 
 from stiffness_copilot_mujoco.learning.frozen_vision_backbone import (  # noqa: E402
     FrozenBackboneLoadConfig,
