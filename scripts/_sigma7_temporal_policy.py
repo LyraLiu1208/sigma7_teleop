@@ -80,12 +80,14 @@ from stiffness_copilot_mujoco.learning.vision_residual_stiffness import (  # noq
     MLP_V2_HEAD_TYPE,
     VisionResidualHeadV2,
     VisionResidualBCPolicy,
+    _resolve_bundled_dinov3_asset,
     _bounded_residual,
     _npz_arrays_to_state_dict,
     _state_dict_to_npz_arrays,
     describe_residual_policy_contract,
     load_image_only_residual_bc_policy,
 )
+from stiffness_copilot_mujoco.runtime_defaults import DEFAULT_DINOV3_CHECKPOINT, DEFAULT_DINOV3_REPO  # noqa: E402
 from stiffness_copilot_mujoco.sim.scene import (  # noqa: E402
     CANONICAL_EYE_IN_HAND_CAMERA_ATTACHMENT_PARENT,
     CANONICAL_EYE_IN_HAND_CAMERA_MOUNT_TYPE,
@@ -212,9 +214,17 @@ def _load_frozen_backbone_from_metadata(metadata: dict[str, Any]) -> tuple[Any, 
     preprocess_config = metadata.get("preprocessing_config") or {}
     if not isinstance(preprocess_config, dict):
         raise ValueError("Temporal policy metadata field 'preprocessing_config' must be a mapping.")
+    resolved_dinov3_repo = _resolve_bundled_dinov3_asset(
+        str(metadata["dinov3_repo"]),
+        DEFAULT_DINOV3_REPO,
+    )
+    resolved_dinov3_checkpoint = _resolve_bundled_dinov3_asset(
+        str(metadata["dinov3_checkpoint"]),
+        DEFAULT_DINOV3_CHECKPOINT,
+    )
     load_config = FrozenBackboneLoadConfig(
-        dinov3_repo=Path(str(metadata["dinov3_repo"])),
-        dinov3_checkpoint=Path(str(metadata["dinov3_checkpoint"])),
+        dinov3_repo=resolved_dinov3_repo,
+        dinov3_checkpoint=resolved_dinov3_checkpoint,
         dinov3_entrypoint=str(metadata["dinov3_entrypoint"]),
         preprocess_config=FrozenBackbonePreprocessConfig(
             resize_height=int(preprocess_config.get("resize_height", 224)),
@@ -227,7 +237,10 @@ def _load_frozen_backbone_from_metadata(metadata: dict[str, Any]) -> tuple[Any, 
         ),
         seed=int(metadata.get("backbone_seed", metadata.get("seed", 0))),
     )
-    return build_frozen_dinov3_backbone(load_config)
+    encoder, backbone_metadata = build_frozen_dinov3_backbone(load_config)
+    metadata["dinov3_repo"] = str(resolved_dinov3_repo)
+    metadata["dinov3_checkpoint"] = str(resolved_dinov3_checkpoint)
+    return encoder, backbone_metadata
 
 
 @dataclass(frozen=True)
