@@ -16,6 +16,11 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 
+ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
 from _sigma7_residual_pipeline_common import (
     DEFAULT_PIPELINE_ROOT,
     ensure_mujoco_src_on_path,
@@ -34,8 +39,6 @@ from collect_sigma7_residual_bc_episode import (
     _teleop_config_from_args,
 )
 
-
-ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MJ_PYTHON = default_mjpython()
 ensure_mujoco_src_on_path()
 
