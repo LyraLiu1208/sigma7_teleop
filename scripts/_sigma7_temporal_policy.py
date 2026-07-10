@@ -19,6 +19,27 @@ for candidate in (LOCAL_SRC_ROOT, LEGACY_SRC_ROOT):
     if candidate.exists() and str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
+
+def _purge_foreign_stiffness_modules(preferred_src_root: Path) -> None:
+    preferred_root = str(preferred_src_root.resolve())
+    for module_name in list(sys.modules):
+        if module_name != "stiffness_copilot_mujoco" and not module_name.startswith("stiffness_copilot_mujoco."):
+            continue
+        module = sys.modules.get(module_name)
+        module_file = getattr(module, "__file__", None)
+        if not module_file:
+            continue
+        try:
+            resolved = str(Path(module_file).resolve())
+        except OSError:
+            resolved = str(module_file)
+        if not resolved.startswith(preferred_root):
+            del sys.modules[module_name]
+
+
+if LOCAL_SRC_ROOT.exists():
+    _purge_foreign_stiffness_modules(LOCAL_SRC_ROOT)
+
 from stiffness_copilot_mujoco.learning.frozen_vision_backbone import (  # noqa: E402
     FrozenBackboneLoadConfig,
     FrozenBackbonePreprocessConfig,
