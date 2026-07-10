@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 from collections import deque
@@ -39,6 +40,28 @@ def _purge_foreign_stiffness_modules(preferred_src_root: Path) -> None:
 
 if LOCAL_SRC_ROOT.exists():
     _purge_foreign_stiffness_modules(LOCAL_SRC_ROOT)
+
+
+def _force_load_local_package(module_name: str, package_dir: Path) -> None:
+    init_py = package_dir / "__init__.py"
+    if not init_py.exists():
+        return
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        init_py,
+        submodule_search_locations=[str(package_dir)],
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to build import spec for {module_name!r} from {init_py}.")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+
+
+if LOCAL_SRC_ROOT.exists():
+    local_pkg_root = LOCAL_SRC_ROOT / "stiffness_copilot_mujoco"
+    _force_load_local_package("stiffness_copilot_mujoco", local_pkg_root)
+    _force_load_local_package("stiffness_copilot_mujoco.learning", local_pkg_root / "learning")
 
 from stiffness_copilot_mujoco.learning.frozen_vision_backbone import (  # noqa: E402
     FrozenBackboneLoadConfig,
