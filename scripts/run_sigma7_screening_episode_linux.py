@@ -24,6 +24,7 @@ from _sigma7_residual_pipeline_common import (
     write_json,
 )
 from _sigma7_runtime import default_mjpython, default_viewer_python
+from _sigma7_temporal_policy import load_sigma7_residual_policy_runtime, validate_sigma7_track_a_residual_policy_metadata
 from collect_sigma7_residual_bc_episode import (
     DEFAULT_CONTACT_PROFILE,
     DEFAULT_SEEDED_HOLE_YAW_MAX_DEG,
@@ -58,10 +59,8 @@ from stiffness_copilot_mujoco.evaluation.force_metrics import (  # noqa: E402
 )
 from stiffness_copilot_mujoco.evaluation.track_a_episode_runner import (  # noqa: E402
     summarize_policy_metadata,
-    validate_track_a_v2_policy_metadata,
 )
 from stiffness_copilot_mujoco.franka_viewer import load_model  # noqa: E402
-from stiffness_copilot_mujoco.learning.vision_residual_stiffness import load_image_only_residual_bc_policy  # noqa: E402
 from stiffness_copilot_mujoco.metrics.task_metrics import (  # noqa: E402
     geometry_from_config,
     hole_center_position,
@@ -387,21 +386,24 @@ def main(argv: list[str] | None = None) -> int:
     reference_stiffness_matrix = np.asarray(controller_entry.position_stiffness_matrix, dtype=float)
     stiffness_smoothing_config = _build_stiffness_smoothing_config(args) if controller_kind == "residual" else None
     policy_path: Path | None = None
-    policy = None
+    policy_runtime = None
     policy_metadata_summary: dict[str, Any] | None = None
     if controller_kind == "residual":
         policy_path = Path(args.policy).expanduser().resolve(strict=False)
-        policy = load_image_only_residual_bc_policy(policy_path)
-        policy_hard_failures = validate_track_a_v2_policy_metadata(dict(policy.metadata))
+        policy_runtime = load_sigma7_residual_policy_runtime(policy_path)
+        policy_hard_failures = validate_sigma7_track_a_residual_policy_metadata(dict(policy_runtime.metadata))
         if policy_hard_failures:
             raise ValueError("Policy metadata guard failed: " + "; ".join(policy_hard_failures))
-        policy_metadata_summary = summarize_policy_metadata(dict(policy.metadata))
-        policy_reference_controller_id = str(policy.metadata["reference_controller_id"])
+        policy_metadata_summary = summarize_policy_metadata(dict(policy_runtime.metadata))
+        policy_metadata_summary["policy_runtime_kind"] = str(getattr(policy_runtime, "policy_kind", "unknown"))
+        if "history_steps" in policy_runtime.metadata:
+            policy_metadata_summary["history_steps"] = int(policy_runtime.metadata["history_steps"])
+        policy_reference_controller_id = str(policy_runtime.metadata["reference_controller_id"])
         if policy_reference_controller_id != args.controller_id:
             raise ValueError(
                 f"Policy reference_controller_id {policy_reference_controller_id!r} does not match selected controller_id {args.controller_id!r}."
             )
-        policy_base_matrix = np.asarray(policy.base_spec.base_matrix, dtype=float)
+        policy_base_matrix = np.asarray(policy_runtime.base_spec.base_matrix, dtype=float)
         if not np.allclose(policy_base_matrix, reference_stiffness_matrix, atol=1e-9, rtol=0.0):
             raise ValueError("Residual policy base stiffness does not match the selected controller registry entry.")
 
@@ -527,6 +529,8 @@ def main(argv: list[str] | None = None) -> int:
                 time.sleep(0.01)
         print("first Sigma7 pose packet received, screening running", flush=True)
         print("press q in this terminal to mark failure, save data, and exit", flush=True)
+        if policy_runtime is not None:
+            policy_runtime.reset()
 
         smoother = (
             StiffnessCommandSmoother(
@@ -626,7 +630,7 @@ def main(argv: list[str] | None = None) -> int:
                 theta_delta = current_theta_delta
                 policy_refreshed_this_step = False
                 if controller_kind == "residual":
-                    assert policy is not None
+                    assert policy_runtime is not None
                     assert rgb_renderer is not None
                     current_time_seconds = float(step) * simulation_dt_seconds
                     should_refresh_policy = bool(last_policy_refresh_step is None)
@@ -637,7 +641,7 @@ def main(argv: list[str] | None = None) -> int:
                         should_refresh_policy = bool((step - last_policy_refresh_step) >= policy_update_period_steps)
                     if should_refresh_policy:
                         frame = rgb_renderer.render(data)
-                        residual_raw, residual_after_bound, position_stiffness, theta, theta_delta = policy.predict_image_only(
+                        residual_raw, residual_after_bound, position_stiffness, theta, theta_delta = policy_runtime.predict_image_only(
                             frame,
                             residual_scale=float(args.residual_scale),
                         )
@@ -645,7 +649,7 @@ def main(argv: list[str] | None = None) -> int:
                         current_residual_after_bound_vector = np.asarray(residual_after_bound, dtype=float).reshape(-1)
                         current_stiffness_after_residual = np.asarray(position_stiffness, dtype=float).reshape(3, 3)
                         current_stiffness_target = reference_stiffness_matrix + (
-                            current_stiffness_after_residual - policy.base_spec.base_matrix
+                            current_stiffness_after_residual - policy_runtime.base_spec.base_matrix
                         )
                         current_theta = None if theta is None else np.asarray(theta, dtype=float).reshape(-1).copy()
                         current_theta_delta = None if theta_delta is None else np.asarray(theta_delta, dtype=float).reshape(-1).copy()
