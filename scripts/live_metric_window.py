@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import select
 import sys
+import time
 from collections import deque
-from typing import Iterable
+from typing import Any
 
-import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -15,14 +17,15 @@ DEFAULT_FORCE_FILTER_ORDER = 4
 DEFAULT_FORCE_FILTER_CUTOFF_HZ = 40.0
 DEFAULT_FORCE_FILTER_FS_HZ = 500.0
 
-
 COLORS = {
-    "x": (54, 112, 255),
-    "y": (80, 190, 110),
-    "z": (230, 130, 60),
-    "norm": (245, 245, 245),
-    "normal": (80, 220, 255),
-    "tangent": (210, 110, 255),
+    "kx": "#3670ff",
+    "ky": "#50be6e",
+    "kz": "#e6823c",
+    "force": "#50dcff",
+    "text": "#f2f2f2",
+    "muted": "#b8b8b8",
+    "grid": "#3d3d3d",
+    "background": "#171917",
 }
 
 
@@ -34,162 +37,84 @@ def _finite(value: object, default: float = 0.0) -> float:
     return result if np.isfinite(result) else default
 
 
-def _scale(values: Iterable[float], *, pad_fraction: float = 0.12) -> tuple[float, float]:
-    finite_values = [float(v) for v in values if np.isfinite(v)]
-    if not finite_values:
-        return -1.0, 1.0
-    lo = min(finite_values)
-    hi = max(finite_values)
-    if abs(hi - lo) < 1e-9:
-        pad = max(1.0, abs(hi) * 0.1)
-        return lo - pad, hi + pad
-    pad = (hi - lo) * pad_fraction
-    return lo - pad, hi + pad
+def _configure_window(fig: Any, *, title: str, x: int | None, y: int | None, width: int, height: int) -> None:
+    manager = plt.get_current_fig_manager()
+    try:
+        manager.set_window_title(title)
+    except Exception:
+        pass
+    try:
+        # Qt backends.
+        if x is not None and y is not None and hasattr(manager, "window"):
+            manager.window.setGeometry(int(x), int(y), int(width), int(height))
+            return
+    except Exception:
+        pass
+    try:
+        # Tk backends.
+        if x is not None and y is not None and hasattr(manager, "window"):
+            manager.window.wm_geometry(f"{int(width)}x{int(height)}+{int(x)}+{int(y)}")
+    except Exception:
+        pass
+    try:
+        fig.set_size_inches(max(3.0, width / 100.0), max(2.4, height / 100.0), forward=True)
+    except Exception:
+        pass
 
 
-def _draw_panel(
-    canvas: np.ndarray,
-    *,
-    rect: tuple[int, int, int, int],
-    times: list[float],
-    series: dict[str, list[float]],
-    colors: dict[str, tuple[int, int, int]],
-    title: str,
-    unit: str,
-) -> None:
-    x0, y0, x1, y1 = rect
-    cv2.rectangle(canvas, (x0, y0), (x1, y1), (70, 70, 70), 1)
-    cv2.putText(canvas, title, (x0 + 10, y0 + 24), cv2.FONT_HERSHEY_SIMPLEX, 0.62, (245, 245, 245), 1, cv2.LINE_AA)
-    legend_x = x0 + 10
-    for index, (key, values_for_key) in enumerate(series.items()):
-        if not values_for_key:
-            continue
-        color = colors[key]
-        cv2.putText(
-            canvas,
-            f"{key}: {values_for_key[-1]:.2f}",
-            (legend_x + index * 150, y1 - 10),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.48,
-            color,
-            1,
-            cv2.LINE_AA,
+def _make_figure(args: argparse.Namespace) -> tuple[Any, Any, dict[str, Any]]:
+    fig, ax = plt.subplots(figsize=(max(3.0, args.window_width / 100.0), max(2.4, args.window_height / 100.0)))
+    fig.patch.set_facecolor(COLORS["background"])
+    ax.set_facecolor(COLORS["background"])
+    for spine in ax.spines.values():
+        spine.set_color(COLORS["grid"])
+    ax.tick_params(colors=COLORS["muted"], labelsize=8)
+    ax.grid(True, color=COLORS["grid"], linewidth=0.7, alpha=0.8)
+    ax.set_title(args.title, color=COLORS["text"], loc="left", fontsize=10, pad=10)
+    ax.set_xlabel("time (s)", color=COLORS["muted"], fontsize=8)
+
+    artists: dict[str, Any] = {}
+    if args.kind == "stiffness":
+        ax.set_ylabel("stiffness (N/m)", color=COLORS["muted"], fontsize=8)
+        artists["kx_line"], = ax.plot([], [], color=COLORS["kx"], linewidth=2.0, label="Kx")
+        artists["ky_line"], = ax.plot([], [], color=COLORS["ky"], linewidth=2.0, label="Ky")
+        artists["kz_line"], = ax.plot([], [], color=COLORS["kz"], linewidth=2.0, label="Kz")
+        artists["readout"] = fig.text(
+            0.04,
+            0.93,
+            "Kx --   Ky --   Kz --",
+            color=COLORS["text"],
+            fontsize=15,
+            fontweight="bold",
         )
-    if not times:
-        cv2.putText(
-            canvas,
-            "waiting for samples...",
-            (x0 + 22, y0 + 74),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.72,
-            (180, 180, 180),
-            1,
-            cv2.LINE_AA,
-        )
-        return
-    if len(times) < 2:
-        return
-
-    values = [v for values_for_key in series.values() for v in values_for_key]
-    y_min, y_max = _scale(values)
-    t_min = min(times)
-    t_max = max(times)
-    if abs(t_max - t_min) < 1e-9:
-        t_max = t_min + 1.0
-
-    plot_left = x0 + 54
-    plot_right = x1 - 14
-    plot_top = y0 + 42
-    plot_bottom = y1 - 34
-    cv2.line(canvas, (plot_left, plot_bottom), (plot_right, plot_bottom), (90, 90, 90), 1)
-    cv2.line(canvas, (plot_left, plot_top), (plot_left, plot_bottom), (90, 90, 90), 1)
-    cv2.putText(canvas, f"{y_max:.1f}", (x0 + 7, plot_top + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.43, (180, 180, 180), 1, cv2.LINE_AA)
-    cv2.putText(canvas, f"{y_min:.1f}", (x0 + 7, plot_bottom + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.43, (180, 180, 180), 1, cv2.LINE_AA)
-    cv2.putText(canvas, unit, (plot_left, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (180, 180, 180), 1, cv2.LINE_AA)
-
-    def to_point(t: float, v: float) -> tuple[int, int]:
-        x = int(plot_left + (t - t_min) / (t_max - t_min) * (plot_right - plot_left))
-        y = int(plot_bottom - (v - y_min) / (y_max - y_min) * (plot_bottom - plot_top))
-        return x, y
-
-    for index, (key, values_for_key) in enumerate(series.items()):
-        color = colors[key]
-        points = [to_point(t, v) for t, v in zip(times, values_for_key) if np.isfinite(v)]
-        for p0, p1 in zip(points[:-1], points[1:]):
-            cv2.line(canvas, p0, p1, color, 2, cv2.LINE_AA)
-
-
-def _draw_readout(
-    canvas: np.ndarray,
-    *,
-    x: int,
-    y: int,
-    label: str,
-    value: float,
-    unit: str,
-    color: tuple[int, int, int],
-) -> None:
-    cv2.putText(canvas, label, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (185, 185, 185), 1, cv2.LINE_AA)
-    cv2.putText(canvas, f"{value:.1f}", (x, y + 42), cv2.FONT_HERSHEY_SIMPLEX, 1.18, color, 2, cv2.LINE_AA)
-    cv2.putText(canvas, unit, (x + 112, y + 42), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (185, 185, 185), 1, cv2.LINE_AA)
-
-
-def _draw_stiffness(rows: deque[dict[str, float]], title: str) -> np.ndarray:
-    canvas = np.full((520, 900, 3), 24, dtype=np.uint8)
-    cv2.putText(canvas, title, (22, 34), cv2.FONT_HERSHEY_SIMPLEX, 0.78, (245, 245, 245), 1, cv2.LINE_AA)
-    times = [row["time"] for row in rows]
-    series = {
-        "Kx": [row["kx"] for row in rows],
-        "Ky": [row["ky"] for row in rows],
-        "Kz": [row["kz"] for row in rows],
-    }
-    if rows:
-        latest = rows[-1]
-        _draw_readout(canvas, x=28, y=62, label="Kx", value=latest["kx"], unit="N/m", color=COLORS["x"])
-        _draw_readout(canvas, x=318, y=62, label="Ky", value=latest["ky"], unit="N/m", color=COLORS["y"])
-        _draw_readout(canvas, x=608, y=62, label="Kz", value=latest["kz"], unit="N/m", color=COLORS["z"])
+        artists["status"] = fig.text(0.04, 0.885, "waiting for stiffness samples...", color=COLORS["muted"], fontsize=9)
     else:
-        cv2.putText(canvas, "waiting for stiffness samples...", (28, 96), cv2.FONT_HERSHEY_SIMPLEX, 0.72, (185, 185, 185), 1, cv2.LINE_AA)
-    _draw_panel(
-        canvas,
-        rect=(18, 146, 882, 498),
-        times=times,
-        series=series,
-        colors={"Kx": COLORS["x"], "Ky": COLORS["y"], "Kz": COLORS["z"]},
-        title="Commanded translational stiffness",
-        unit="N/m",
-    )
-    return canvas
-
-
-def _draw_force(rows: deque[dict[str, float]], title: str) -> np.ndarray:
-    canvas = np.full((520, 900, 3), 24, dtype=np.uint8)
-    cv2.putText(canvas, title, (22, 34), cv2.FONT_HERSHEY_SIMPLEX, 0.78, (245, 245, 245), 1, cv2.LINE_AA)
-    times = [row["time"] for row in rows]
-    filtered_force = _filtered_force_norm(rows)
-    series = {"LPF |F|": filtered_force.tolist()}
-    if filtered_force.size:
-        _draw_readout(
-            canvas,
-            x=28,
-            y=62,
-            label="Low-pass filtered resultant contact force",
-            value=float(filtered_force[-1]),
-            unit="N",
-            color=COLORS["normal"],
+        ax.set_ylabel("force (N)", color=COLORS["muted"], fontsize=8)
+        artists["force_line"], = ax.plot([], [], color=COLORS["force"], linewidth=2.0, label="LPF |F|")
+        artists["readout"] = fig.text(
+            0.04,
+            0.93,
+            "LPF |F| -- N",
+            color=COLORS["force"],
+            fontsize=16,
+            fontweight="bold",
         )
-    else:
-        cv2.putText(canvas, "waiting for force samples...", (28, 96), cv2.FONT_HERSHEY_SIMPLEX, 0.72, (185, 185, 185), 1, cv2.LINE_AA)
-    _draw_panel(
-        canvas,
-        rect=(18, 146, 882, 498),
-        times=times,
-        series=series,
-        colors={"LPF |F|": COLORS["normal"]},
-        title="Low-pass filtered resultant contact force",
-        unit="N",
+        artists["status"] = fig.text(0.04, 0.885, "waiting for force samples...", color=COLORS["muted"], fontsize=9)
+
+    ax.legend(loc="upper right", facecolor=COLORS["background"], edgecolor=COLORS["grid"], labelcolor=COLORS["text"], fontsize=8)
+    fig.subplots_adjust(top=0.80, left=0.11, right=0.97, bottom=0.16)
+    _configure_window(
+        fig,
+        title=args.title,
+        x=args.window_x,
+        y=args.window_y,
+        width=max(240, int(args.window_width)),
+        height=max(180, int(args.window_height)),
     )
-    return canvas
+    plt.show(block=False)
+    fig.canvas.draw_idle()
+    plt.pause(0.05)
+    return fig, ax, artists
 
 
 def _butterworth_sos(fs_hz: float, cutoff_hz: float, order: int) -> np.ndarray:
@@ -220,6 +145,74 @@ def _filtered_force_norm(rows: deque[dict[str, float]]) -> np.ndarray:
     return np.linalg.norm(filtered_components, axis=1)
 
 
+def _scale_axis(ax: Any, times: np.ndarray, values: list[np.ndarray]) -> None:
+    if times.size == 0:
+        ax.set_xlim(0.0, 1.0)
+        ax.set_ylim(-1.0, 1.0)
+        return
+    x_min = float(np.min(times))
+    x_max = float(np.max(times))
+    if abs(x_max - x_min) < 1e-9:
+        x_max = x_min + 1.0
+    finite_values = np.concatenate([array[np.isfinite(array)] for array in values if array.size])
+    if finite_values.size == 0:
+        y_min, y_max = -1.0, 1.0
+    else:
+        y_min = float(np.min(finite_values))
+        y_max = float(np.max(finite_values))
+        if abs(y_max - y_min) < 1e-9:
+            pad = max(1.0, abs(y_max) * 0.1)
+        else:
+            pad = (y_max - y_min) * 0.12
+        y_min -= pad
+        y_max += pad
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+
+
+def _render(args: argparse.Namespace, rows: deque[dict[str, float]], fig: Any, ax: Any, artists: dict[str, Any]) -> None:
+    times = np.asarray([row["time"] for row in rows], dtype=float)
+    if args.kind == "stiffness":
+        kx = np.asarray([row["kx"] for row in rows], dtype=float)
+        ky = np.asarray([row["ky"] for row in rows], dtype=float)
+        kz = np.asarray([row["kz"] for row in rows], dtype=float)
+        artists["kx_line"].set_data(times, kx)
+        artists["ky_line"].set_data(times, ky)
+        artists["kz_line"].set_data(times, kz)
+        if rows:
+            latest = rows[-1]
+            artists["readout"].set_text(f"Kx {latest['kx']:.1f}   Ky {latest['ky']:.1f}   Kz {latest['kz']:.1f} N/m")
+            artists["status"].set_text(f"samples: {len(rows)}")
+        _scale_axis(ax, times, [kx, ky, kz])
+    else:
+        force = _filtered_force_norm(rows)
+        artists["force_line"].set_data(times, force)
+        if force.size:
+            artists["readout"].set_text(f"LPF |F| {float(force[-1]):.1f} N")
+            artists["status"].set_text(f"Butterworth low-pass: order 4, cutoff 40 Hz, fs 500 Hz, samples: {len(rows)}")
+        _scale_axis(ax, times, [force])
+
+    fig.canvas.draw_idle()
+    plt.pause(0.001)
+
+
+def _row_from_payload(kind: str, payload: dict[str, Any]) -> dict[str, float]:
+    t = _finite(payload.get("time"), 0.0)
+    if kind == "stiffness":
+        return {
+            "time": t,
+            "kx": _finite(payload.get("kx")),
+            "ky": _finite(payload.get("ky")),
+            "kz": _finite(payload.get("kz")),
+        }
+    return {
+        "time": t,
+        "fx": _finite(payload.get("fx")),
+        "fy": _finite(payload.get("fy")),
+        "fz": _finite(payload.get("fz")),
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Display live Sigma7 screening metrics from JSON lines on stdin.")
     parser.add_argument("--kind", choices=("stiffness", "force"), required=True)
@@ -241,15 +234,15 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
     rows: deque[dict[str, float]] = deque(maxlen=max(int(args.max_points), 2))
-    cv2.namedWindow(args.title, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(args.title, max(240, int(args.window_width)), max(180, int(args.window_height)))
-    if args.window_x is not None and args.window_y is not None:
-        cv2.moveWindow(args.title, int(args.window_x), int(args.window_y))
-    initial_canvas = _draw_stiffness(rows, args.title) if args.kind == "stiffness" else _draw_force(rows, args.title)
-    cv2.imshow(args.title, initial_canvas)
-    cv2.waitKeyEx(1)
+    fig, ax, artists = _make_figure(args)
     row_count = 0
-    while True:
+    last_render = time.perf_counter()
+
+    while plt.fignum_exists(fig.number):
+        readable, _, _ = select.select([sys.stdin], [], [], 0.05)
+        if not readable:
+            plt.pause(0.001)
+            continue
         line = sys.stdin.readline()
         if not line:
             break
@@ -259,40 +252,22 @@ def main(argv: list[str] | None = None) -> int:
             continue
         if payload.get("close"):
             break
-
-        t = _finite(payload.get("time"), 0.0)
-        if args.kind == "stiffness":
-            row = {
-                "time": t,
-                "kx": _finite(payload.get("kx")),
-                "ky": _finite(payload.get("ky")),
-                "kz": _finite(payload.get("kz")),
-            }
-        else:
-            row = {
-                "time": t,
-                "fx": _finite(payload.get("fx")),
-                "fy": _finite(payload.get("fy")),
-                "fz": _finite(payload.get("fz")),
-            }
+        row = _row_from_payload(args.kind, payload)
         rows.append(row)
         row_count += 1
 
         if args.window_seconds > 0.0 and rows:
-            cutoff = t - float(args.window_seconds)
+            cutoff = row["time"] - float(args.window_seconds)
             while len(rows) > 2 and rows[0]["time"] < cutoff:
                 rows.popleft()
 
-        if row_count % max(int(args.draw_stride), 1) != 0:
-            continue
-        canvas = _draw_stiffness(rows, args.title) if args.kind == "stiffness" else _draw_force(rows, args.title)
-        cv2.imshow(args.title, canvas)
-        key = cv2.waitKeyEx(1)
-        if key in {27, ord("q"), ord("Q")}:
-            break
+        now = time.perf_counter()
+        if row_count % max(int(args.draw_stride), 1) == 0 or now - last_render > 0.25:
+            _render(args, rows, fig, ax, artists)
+            last_render = now
 
     try:
-        cv2.destroyWindow(args.title)
+        plt.close(fig)
     except Exception:
         pass
     return 0
