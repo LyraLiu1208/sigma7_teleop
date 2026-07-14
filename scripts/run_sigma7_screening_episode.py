@@ -275,7 +275,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--live-metrics-window-x", type=int, default=1380)
     parser.add_argument("--live-metrics-window-y", type=int, default=80)
     parser.add_argument("--live-metrics-window-width", type=int, default=560)
-    parser.add_argument("--live-metrics-window-height", type=int, default=320)
+    parser.add_argument("--live-metrics-window-height", type=int, default=400)
     parser.add_argument("--residual-scale", type=float, default=1.0)
     parser.add_argument(
         "--stiffness-update-period-steps",

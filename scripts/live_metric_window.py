@@ -60,6 +60,33 @@ def _draw_panel(
     x0, y0, x1, y1 = rect
     cv2.rectangle(canvas, (x0, y0), (x1, y1), (70, 70, 70), 1)
     cv2.putText(canvas, title, (x0 + 10, y0 + 24), cv2.FONT_HERSHEY_SIMPLEX, 0.62, (245, 245, 245), 1, cv2.LINE_AA)
+    legend_x = x0 + 10
+    for index, (key, values_for_key) in enumerate(series.items()):
+        if not values_for_key:
+            continue
+        color = colors[key]
+        cv2.putText(
+            canvas,
+            f"{key}: {values_for_key[-1]:.2f}",
+            (legend_x + index * 150, y1 - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.48,
+            color,
+            1,
+            cv2.LINE_AA,
+        )
+    if not times:
+        cv2.putText(
+            canvas,
+            "waiting for samples...",
+            (x0 + 22, y0 + 74),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.72,
+            (180, 180, 180),
+            1,
+            cv2.LINE_AA,
+        )
+        return
     if len(times) < 2:
         return
 
@@ -85,26 +112,30 @@ def _draw_panel(
         y = int(plot_bottom - (v - y_min) / (y_max - y_min) * (plot_bottom - plot_top))
         return x, y
 
-    legend_x = x0 + 10
     for index, (key, values_for_key) in enumerate(series.items()):
         color = colors[key]
-        cv2.putText(
-            canvas,
-            f"{key}: {values_for_key[-1]:.2f}",
-            (legend_x + index * 136, y1 - 10),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.45,
-            color,
-            1,
-            cv2.LINE_AA,
-        )
         points = [to_point(t, v) for t, v in zip(times, values_for_key) if np.isfinite(v)]
         for p0, p1 in zip(points[:-1], points[1:]):
             cv2.line(canvas, p0, p1, color, 2, cv2.LINE_AA)
 
 
+def _draw_readout(
+    canvas: np.ndarray,
+    *,
+    x: int,
+    y: int,
+    label: str,
+    value: float,
+    unit: str,
+    color: tuple[int, int, int],
+) -> None:
+    cv2.putText(canvas, label, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (185, 185, 185), 1, cv2.LINE_AA)
+    cv2.putText(canvas, f"{value:.1f}", (x, y + 42), cv2.FONT_HERSHEY_SIMPLEX, 1.18, color, 2, cv2.LINE_AA)
+    cv2.putText(canvas, unit, (x + 112, y + 42), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (185, 185, 185), 1, cv2.LINE_AA)
+
+
 def _draw_stiffness(rows: deque[dict[str, float]], title: str) -> np.ndarray:
-    canvas = np.full((460, 900, 3), 24, dtype=np.uint8)
+    canvas = np.full((520, 900, 3), 24, dtype=np.uint8)
     cv2.putText(canvas, title, (22, 34), cv2.FONT_HERSHEY_SIMPLEX, 0.78, (245, 245, 245), 1, cv2.LINE_AA)
     times = [row["time"] for row in rows]
     series = {
@@ -112,9 +143,16 @@ def _draw_stiffness(rows: deque[dict[str, float]], title: str) -> np.ndarray:
         "Ky": [row["ky"] for row in rows],
         "Kz": [row["kz"] for row in rows],
     }
+    if rows:
+        latest = rows[-1]
+        _draw_readout(canvas, x=28, y=62, label="Kx", value=latest["kx"], unit="N/m", color=COLORS["x"])
+        _draw_readout(canvas, x=318, y=62, label="Ky", value=latest["ky"], unit="N/m", color=COLORS["y"])
+        _draw_readout(canvas, x=608, y=62, label="Kz", value=latest["kz"], unit="N/m", color=COLORS["z"])
+    else:
+        cv2.putText(canvas, "waiting for stiffness samples...", (28, 96), cv2.FONT_HERSHEY_SIMPLEX, 0.72, (185, 185, 185), 1, cv2.LINE_AA)
     _draw_panel(
         canvas,
-        rect=(18, 58, 882, 438),
+        rect=(18, 146, 882, 498),
         times=times,
         series=series,
         colors={"Kx": COLORS["x"], "Ky": COLORS["y"], "Kz": COLORS["z"]},
@@ -125,13 +163,26 @@ def _draw_stiffness(rows: deque[dict[str, float]], title: str) -> np.ndarray:
 
 
 def _draw_force(rows: deque[dict[str, float]], title: str) -> np.ndarray:
-    canvas = np.full((460, 900, 3), 24, dtype=np.uint8)
+    canvas = np.full((520, 900, 3), 24, dtype=np.uint8)
     cv2.putText(canvas, title, (22, 34), cv2.FONT_HERSHEY_SIMPLEX, 0.78, (245, 245, 245), 1, cv2.LINE_AA)
     times = [row["time"] for row in rows]
-    series = {"LPF |F|": _filtered_force_norm(rows).tolist()}
+    filtered_force = _filtered_force_norm(rows)
+    series = {"LPF |F|": filtered_force.tolist()}
+    if filtered_force.size:
+        _draw_readout(
+            canvas,
+            x=28,
+            y=62,
+            label="Low-pass filtered resultant contact force",
+            value=float(filtered_force[-1]),
+            unit="N",
+            color=COLORS["normal"],
+        )
+    else:
+        cv2.putText(canvas, "waiting for force samples...", (28, 96), cv2.FONT_HERSHEY_SIMPLEX, 0.72, (185, 185, 185), 1, cv2.LINE_AA)
     _draw_panel(
         canvas,
-        rect=(18, 58, 882, 438),
+        rect=(18, 146, 882, 498),
         times=times,
         series=series,
         colors={"LPF |F|": COLORS["normal"]},
@@ -179,7 +230,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--window-x", type=int, default=None)
     parser.add_argument("--window-y", type=int, default=None)
     parser.add_argument("--window-width", type=int, default=560)
-    parser.add_argument("--window-height", type=int, default=320)
+    parser.add_argument("--window-height", type=int, default=400)
     args = parser.parse_args(argv)
 
     if args.kind == "force":

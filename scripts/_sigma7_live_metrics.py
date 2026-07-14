@@ -20,7 +20,7 @@ class LiveMetricWindow:
         window_x: int | None = None,
         window_y: int | None = None,
         window_width: int = 560,
-        window_height: int = 320,
+        window_height: int = 400,
     ) -> None:
         if not python_path.exists():
             raise FileNotFoundError(f"Metric viewer Python not found: {python_path}")
