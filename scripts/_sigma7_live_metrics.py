@@ -17,27 +17,35 @@ class LiveMetricWindow:
         title: str,
         window_seconds: float,
         draw_stride: int = 1,
+        window_x: int | None = None,
+        window_y: int | None = None,
+        window_width: int = 560,
+        window_height: int = 320,
     ) -> None:
         if not python_path.exists():
             raise FileNotFoundError(f"Metric viewer Python not found: {python_path}")
         if not script_path.exists():
             raise FileNotFoundError(f"Metric viewer script not found: {script_path}")
-        self._proc = subprocess.Popen(
-            [
-                str(python_path),
-                "-u",
-                str(script_path),
-                "--kind",
-                str(kind),
-                "--title",
-                str(title),
-                "--window-seconds",
-                str(float(window_seconds)),
-                "--draw-stride",
-                str(max(1, int(draw_stride))),
-            ],
-            stdin=subprocess.PIPE,
-        )
+        command = [
+            str(python_path),
+            "-u",
+            str(script_path),
+            "--kind",
+            str(kind),
+            "--title",
+            str(title),
+            "--window-seconds",
+            str(float(window_seconds)),
+            "--draw-stride",
+            str(max(1, int(draw_stride))),
+            "--window-width",
+            str(max(240, int(window_width))),
+            "--window-height",
+            str(max(180, int(window_height))),
+        ]
+        if window_x is not None and window_y is not None:
+            command.extend(["--window-x", str(int(window_x)), "--window-y", str(int(window_y))])
+        self._proc = subprocess.Popen(command, stdin=subprocess.PIPE)
         if self._proc.stdin is None:
             raise RuntimeError("Failed to open metric window stdin.")
         self._stdin = self._proc.stdin

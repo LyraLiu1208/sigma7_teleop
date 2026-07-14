@@ -176,6 +176,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--window-seconds", type=float, default=30.0)
     parser.add_argument("--max-points", type=int, default=20000)
     parser.add_argument("--draw-stride", type=int, default=1)
+    parser.add_argument("--window-x", type=int, default=None)
+    parser.add_argument("--window-y", type=int, default=None)
+    parser.add_argument("--window-width", type=int, default=560)
+    parser.add_argument("--window-height", type=int, default=320)
     args = parser.parse_args(argv)
 
     if args.kind == "force":
@@ -187,6 +191,12 @@ def main(argv: list[str] | None = None) -> int:
 
     rows: deque[dict[str, float]] = deque(maxlen=max(int(args.max_points), 2))
     cv2.namedWindow(args.title, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(args.title, max(240, int(args.window_width)), max(180, int(args.window_height)))
+    if args.window_x is not None and args.window_y is not None:
+        cv2.moveWindow(args.title, int(args.window_x), int(args.window_y))
+    initial_canvas = _draw_stiffness(rows, args.title) if args.kind == "stiffness" else _draw_force(rows, args.title)
+    cv2.imshow(args.title, initial_canvas)
+    cv2.waitKeyEx(1)
     row_count = 0
     while True:
         line = sys.stdin.readline()

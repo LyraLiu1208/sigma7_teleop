@@ -272,6 +272,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--third-person-sync-stride", type=int, default=2)
     parser.add_argument("--live-metrics-update-stride", type=int, default=10)
     parser.add_argument("--live-metrics-window-seconds", type=float, default=30.0)
+    parser.add_argument("--live-metrics-window-x", type=int, default=1380)
+    parser.add_argument("--live-metrics-window-y", type=int, default=80)
+    parser.add_argument("--live-metrics-window-width", type=int, default=560)
+    parser.add_argument("--live-metrics-window-height", type=int, default=320)
     parser.add_argument("--residual-scale", type=float, default=1.0)
     parser.add_argument(
         "--stiffness-update-period-steps",
@@ -509,6 +513,10 @@ def main(argv: list[str] | None = None) -> int:
                     title=f"sigma7_stiffness::{scene_name}::{controller_kind}",
                     window_seconds=float(args.live_metrics_window_seconds),
                     draw_stride=1,
+                    window_x=int(args.live_metrics_window_x),
+                    window_y=int(args.live_metrics_window_y),
+                    window_width=int(args.live_metrics_window_width),
+                    window_height=int(args.live_metrics_window_height),
                 )
             except Exception as exc:
                 print(f"[warn] stiffness metric window disabled: {exc}", file=sys.stderr, flush=True)
@@ -521,6 +529,10 @@ def main(argv: list[str] | None = None) -> int:
                     title=f"sigma7_force::{scene_name}::{controller_kind}",
                     window_seconds=float(args.live_metrics_window_seconds),
                     draw_stride=int(args.live_metrics_update_stride),
+                    window_x=int(args.live_metrics_window_x),
+                    window_y=int(args.live_metrics_window_y) + int(args.live_metrics_window_height) + 32,
+                    window_width=int(args.live_metrics_window_width),
+                    window_height=int(args.live_metrics_window_height),
                 )
             except Exception as exc:
                 print(f"[warn] force metric window disabled: {exc}", file=sys.stderr, flush=True)
