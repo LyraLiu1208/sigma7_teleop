@@ -512,8 +512,8 @@ def main(argv: list[str] | None = None) -> int:
             passive_viewer.cam.trackbodyid = third_person_camera.trackbodyid
             passive_viewer.sync()
         if not args.disable_live_metrics:
+            metric_script = ROOT / "scripts" / "live_metric_window.py"
             try:
-                metric_script = ROOT / "scripts" / "live_metric_window.py"
                 stiffness_window = LiveMetricWindow(
                     python_path=args.viewer_python,
                     script_path=metric_script,
@@ -522,6 +522,10 @@ def main(argv: list[str] | None = None) -> int:
                     window_seconds=float(args.live_metrics_window_seconds),
                     draw_stride=1,
                 )
+            except Exception as exc:
+                print(f"[warn] stiffness metric window disabled: {exc}", file=sys.stderr, flush=True)
+                stiffness_window = None
+            try:
                 force_window = LiveMetricWindow(
                     python_path=args.viewer_python,
                     script_path=metric_script,
@@ -531,12 +535,7 @@ def main(argv: list[str] | None = None) -> int:
                     draw_stride=int(args.live_metrics_update_stride),
                 )
             except Exception as exc:
-                print(f"[warn] live metric windows disabled: {exc}", file=sys.stderr, flush=True)
-                if stiffness_window is not None:
-                    stiffness_window.close()
-                if force_window is not None:
-                    force_window.close()
-                stiffness_window = None
+                print(f"[warn] force metric window disabled: {exc}", file=sys.stderr, flush=True)
                 force_window = None
 
         print(

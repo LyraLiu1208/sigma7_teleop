@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -41,6 +42,10 @@ class LiveMetricWindow:
             raise RuntimeError("Failed to open metric window stdin.")
         self._stdin = self._proc.stdin
         self._closed = False
+        time.sleep(0.2)
+        if self._proc.poll() is not None:
+            self._closed = True
+            raise RuntimeError(f"Metric window {title!r} exited during startup with code {self._proc.returncode}.")
 
     def send(self, payload: dict[str, Any]) -> None:
         if self._closed:

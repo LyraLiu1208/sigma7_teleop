@@ -9,7 +9,6 @@ from typing import Iterable
 
 import cv2
 import numpy as np
-from scipy import signal
 
 
 DEFAULT_FORCE_FILTER_ORDER = 4
@@ -143,12 +142,16 @@ def _draw_force(rows: deque[dict[str, float]], title: str) -> np.ndarray:
 
 
 def _butterworth_sos(fs_hz: float, cutoff_hz: float, order: int) -> np.ndarray:
+    from scipy import signal
+
     nyquist = 0.5 * float(fs_hz)
     normalized_cutoff = float(cutoff_hz) / nyquist
     return signal.butter(int(order), normalized_cutoff, btype="lowpass", output="sos")
 
 
 def _filtered_force_norm(rows: deque[dict[str, float]]) -> np.ndarray:
+    from scipy import signal
+
     components = np.asarray([[row["fx"], row["fy"], row["fz"]] for row in rows], dtype=float)
     if components.shape[0] == 0:
         return np.zeros(0, dtype=float)
@@ -174,6 +177,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-points", type=int, default=20000)
     parser.add_argument("--draw-stride", type=int, default=1)
     args = parser.parse_args(argv)
+
+    if args.kind == "force":
+        try:
+            import scipy  # noqa: F401
+        except Exception as exc:
+            print(f"force metric window requires scipy for sosfiltfilt: {exc}", file=sys.stderr, flush=True)
+            return 2
 
     rows: deque[dict[str, float]] = deque(maxlen=max(int(args.max_points), 2))
     cv2.namedWindow(args.title, cv2.WINDOW_NORMAL)
