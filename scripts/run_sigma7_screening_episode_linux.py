@@ -28,6 +28,7 @@ from _sigma7_residual_pipeline_common import (
     scene_screening_participant_controller_root,
     write_json,
 )
+from _sigma7_live_metrics import LiveMetricWindow
 from _sigma7_runtime import default_mjpython, default_viewer_python
 from _sigma7_temporal_policy import load_sigma7_residual_policy_runtime, validate_sigma7_track_a_residual_policy_metadata
 from collect_sigma7_residual_bc_episode import (
@@ -274,8 +275,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--image-height", type=int, default=128)
     parser.add_argument("--show-eye-view", action="store_true")
     parser.add_argument("--disable-third-person", action="store_true")
+    parser.add_argument("--disable-live-metrics", action="store_true")
     parser.add_argument("--eye-render-stride", type=int, default=4)
     parser.add_argument("--third-person-sync-stride", type=int, default=2)
+    parser.add_argument("--live-metrics-update-stride", type=int, default=10)
+    parser.add_argument("--live-metrics-window-seconds", type=float, default=30.0)
     parser.add_argument("--residual-scale", type=float, default=1.0)
     parser.add_argument(
         "--stiffness-update-period-steps",
@@ -341,7 +345,7 @@ def main(argv: list[str] | None = None) -> int:
         raise ValueError("Residual screening requires --renderer-mode native.")
     if not np.isfinite(args.residual_scale) or args.residual_scale < 0.0:
         raise ValueError("--residual-scale must be a finite, non-negative scalar.")
-    if args.eye_render_stride <= 0 or args.third_person_sync_stride <= 0:
+    if args.eye_render_stride <= 0 or args.third_person_sync_stride <= 0 or args.live_metrics_update_stride <= 0:
         raise ValueError("Viewer sync strides must be positive.")
     scene_name = _scene_alias(scene_alias)
     episode_id = int(args.episode_id)
@@ -428,6 +432,8 @@ def main(argv: list[str] | None = None) -> int:
     receiver = Sigma7PoseReceiver(args.packet_host, int(args.packet_port))
     rgb_renderer: MujocoRgbRenderer | None = None
     eye_window: EyeInHandWindow | None = None
+    stiffness_window: LiveMetricWindow | None = None
+    force_window: LiveMetricWindow | None = None
     passive_viewer = None
     scene_path = None
     trace_rows: list[dict[str, Any]] = []
@@ -505,6 +511,33 @@ def main(argv: list[str] | None = None) -> int:
             passive_viewer.cam.fixedcamid = third_person_camera.fixedcamid
             passive_viewer.cam.trackbodyid = third_person_camera.trackbodyid
             passive_viewer.sync()
+        if not args.disable_live_metrics:
+            try:
+                metric_script = ROOT / "scripts" / "live_metric_window.py"
+                stiffness_window = LiveMetricWindow(
+                    python_path=args.viewer_python,
+                    script_path=metric_script,
+                    kind="stiffness",
+                    title=f"sigma7_stiffness::{scene_name}::{controller_kind}",
+                    window_seconds=float(args.live_metrics_window_seconds),
+                    draw_stride=1,
+                )
+                force_window = LiveMetricWindow(
+                    python_path=args.viewer_python,
+                    script_path=metric_script,
+                    kind="force",
+                    title=f"sigma7_force::{scene_name}::{controller_kind}",
+                    window_seconds=float(args.live_metrics_window_seconds),
+                    draw_stride=int(args.live_metrics_update_stride),
+                )
+            except Exception as exc:
+                print(f"[warn] live metric windows disabled: {exc}", file=sys.stderr, flush=True)
+                if stiffness_window is not None:
+                    stiffness_window.close()
+                if force_window is not None:
+                    force_window.close()
+                stiffness_window = None
+                force_window = None
 
         print(
             json.dumps(
@@ -723,6 +756,25 @@ def main(argv: list[str] | None = None) -> int:
                 contact = extract_contact_state(contact_query)
                 force_world = np.asarray(extract_net_peg_hole_contact_force_world(contact_query), dtype=float)
                 force_norm = float(np.linalg.norm(force_world))
+                if stiffness_window is not None and (step == 0 or step % int(args.live_metrics_update_stride) == 0):
+                    stiffness_window.send(
+                        {
+                            "time": float(data.time),
+                            "kx": float(stiffness_matrix_command[0, 0]),
+                            "ky": float(stiffness_matrix_command[1, 1]),
+                            "kz": float(stiffness_matrix_command[2, 2]),
+                        }
+                    )
+                if force_window is not None:
+                    force_values = force_world.reshape(-1)
+                    force_window.send(
+                        {
+                            "time": float(data.time),
+                            "fx": float(force_values[0]),
+                            "fy": float(force_values[1]),
+                            "fz": float(force_values[2]),
+                        }
+                    )
                 max_normal_force = max(max_normal_force, float(contact.normal_force))
                 max_tangential_force = max(max_tangential_force, float(contact.tangential_force))
                 max_penetration_depth = max(max_penetration_depth, float(contact.penetration_depth))
@@ -1012,6 +1064,10 @@ def main(argv: list[str] | None = None) -> int:
             rgb_renderer.close()
         if eye_window is not None:
             eye_window.close()
+        if stiffness_window is not None:
+            stiffness_window.close()
+        if force_window is not None:
+            force_window.close()
         if passive_viewer is not None:
             try:
                 passive_viewer.close()
