@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ class LiveMetricWindow:
             raise FileNotFoundError(f"Metric viewer Python not found: {python_path}")
         if not script_path.exists():
             raise FileNotFoundError(f"Metric viewer script not found: {script_path}")
+        self._title = title
         command = [
             str(python_path),
             "-u",
@@ -45,7 +47,7 @@ class LiveMetricWindow:
         ]
         if window_x is not None and window_y is not None:
             command.extend(["--window-x", str(int(window_x)), "--window-y", str(int(window_y))])
-        self._proc = subprocess.Popen(command, stdin=subprocess.PIPE)
+        self._proc = subprocess.Popen(command, stdin=subprocess.PIPE, text=True, bufsize=1)
         if self._proc.stdin is None:
             raise RuntimeError("Failed to open metric window stdin.")
         self._stdin = self._proc.stdin
@@ -64,7 +66,8 @@ class LiveMetricWindow:
         try:
             self._stdin.write(json.dumps(payload, separators=(",", ":")) + "\n")
             self._stdin.flush()
-        except Exception:
+        except Exception as exc:
+            print(f"[warn] metric window send failed for {self._title!r}: {exc}", file=sys.stderr, flush=True)
             self._closed = True
 
     def close(self) -> None:
