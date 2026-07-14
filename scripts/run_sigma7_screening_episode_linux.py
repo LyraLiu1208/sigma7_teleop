@@ -437,7 +437,6 @@ def main(argv: list[str] | None = None) -> int:
     rgb_renderer: MujocoRgbRenderer | None = None
     eye_window: EyeInHandWindow | None = None
     stiffness_window: LiveMetricWindow | None = None
-    force_window: LiveMetricWindow | None = None
     passive_viewer = None
     scene_path = None
     trace_rows: list[dict[str, Any]] = []
@@ -533,22 +532,6 @@ def main(argv: list[str] | None = None) -> int:
             except Exception as exc:
                 print(f"[warn] stiffness metric window disabled: {exc}", file=sys.stderr, flush=True)
                 stiffness_window = None
-            try:
-                force_window = LiveMetricWindow(
-                    python_path=args.viewer_python,
-                    script_path=metric_script,
-                    kind="force",
-                    title=f"sigma7_force::{scene_name}::{controller_kind}",
-                    window_seconds=float(args.live_metrics_window_seconds),
-                    draw_stride=int(args.live_metrics_update_stride),
-                    window_x=int(args.live_metrics_window_x),
-                    window_y=int(args.live_metrics_window_y) + int(args.live_metrics_window_height) + 32,
-                    window_width=int(args.live_metrics_window_width),
-                    window_height=int(args.live_metrics_window_height),
-                )
-            except Exception as exc:
-                print(f"[warn] force metric window disabled: {exc}", file=sys.stderr, flush=True)
-                force_window = None
 
         print(
             json.dumps(
@@ -774,16 +757,6 @@ def main(argv: list[str] | None = None) -> int:
                             "kx": float(stiffness_matrix_command[0, 0]),
                             "ky": float(stiffness_matrix_command[1, 1]),
                             "kz": float(stiffness_matrix_command[2, 2]),
-                        }
-                    )
-                if force_window is not None:
-                    force_values = force_world.reshape(-1)
-                    force_window.send(
-                        {
-                            "time": float(data.time),
-                            "fx": float(force_values[0]),
-                            "fy": float(force_values[1]),
-                            "fz": float(force_values[2]),
                         }
                     )
                 max_normal_force = max(max_normal_force, float(contact.normal_force))
@@ -1077,8 +1050,6 @@ def main(argv: list[str] | None = None) -> int:
             eye_window.close()
         if stiffness_window is not None:
             stiffness_window.close()
-        if force_window is not None:
-            force_window.close()
         if passive_viewer is not None:
             try:
                 passive_viewer.close()
